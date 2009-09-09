@@ -42,8 +42,16 @@ class Alternative
     $directoryIterator = new DirectoryIterator('/home/heikki/share/alternate/');
     $alternativeGroups = array();
     foreach ($directoryIterator as $file) {
-      if (!$file->isDot() && preg_match('/^\w*\.conf$/', $file->getFilename())) {
-        eval('$alternativeConfigs[] = ' . file_get_contents($file->getPathname()));
+      $filename = $file->getFilename();
+      if (!$file->isDot() && preg_match('/^\w*\.conf$/', $filename)) {
+        $config = file_get_contents($file->getPathname());
+        $configLines = explode("\n", $config);
+        foreach ($configLines as $configLine) {
+          $groupNameValue = explode("=", $configLine);
+          $groupName  = $groupNameValue[0];
+          $groupValue = explode(",", $groupNameValue[1]);
+          $alternativeConfigs[$filename][$groupName] = $groupValue;
+        }
       }
     }
 
