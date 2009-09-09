@@ -3,6 +3,7 @@
 
 class Alternative
 {
+  public $configurationDirectory = '/home/heikki/share/alternate/';
   public function getAlternative($requested)
   {
     # TODO Separate the configuration to its own file.
@@ -39,7 +40,7 @@ class Alternative
 }';
     } else if ($requested == 'switch') {
     }
-    $directoryIterator = new DirectoryIterator('/home/heikki/share/alternate/');
+    $directoryIterator = new DirectoryIterator($this->configurationDirectory);
     $alternativeGroups = array();
     foreach ($directoryIterator as $file) {
       $filename = $file->getFilename();
@@ -73,11 +74,40 @@ class Alternative
       }
     }
   }
+  public function addAlternativeGroup($configName, $groupName, $groupValues)
+  {
+    return file_put_contents($this->configurationDirectory . $configName . '.conf', "\n\n$groupName=$groupValues", FILE_APPEND);
+  }
 }
 
 // Do away with the filename
 array_shift($argv);
-$requested = array_shift($argv);
 
-$x = new Alternative();
-echo $x->getAlternative($requested);
+$argString = implode(" ", $argv);
+$commandLineOptions = getopt($argString);
+$alternative = new Alternative();
+foreach ($commandLineOptions as $commandLineOption => $commandLineOptionValue) {
+  switch ($commandLineOption) {
+    case 'a':
+      foreach ($argv as $argument) {
+        if (!preg_match('/^-/', $argument)) {
+          $arguments[] = $argument;
+        }
+      }
+      $alternative->addAlternativeGroup($arguments[0], $arguments[1], $arguments[2]);
+      die;
+      break;
+    default:
+      echo 'Unknown option "' . $commandLineOption . '". Bailing out.';
+      echo "
+        Usage:
+        alternate [OPTION]... [FILE]...
+        OPTIONS
+        -a CONFIGURATION_NAME GROUPNAME GROUP_ALTERNATIVES";
+      die;
+      break;
+  }
+}
+
+$requested = array_shift($argv);
+echo $alternative->getAlternative($requested);
