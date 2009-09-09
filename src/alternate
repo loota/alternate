@@ -4,42 +4,36 @@
 class Alternative
 {
   public $configurationDirectory = '/home/heikki/share/alternate/';
+
   public function getAlternative($requested)
   {
     # TODO Separate the configuration to its own file.
 
     // TODO Make the special cases configurable.
-    $this->fileContent =
-'if ($value == 1) {
-  echo "foo";
-} else if ($value == 2) {
-  echo "bar";
-} else {
-  echo "baz";
-}';
     if ($requested == 'if') {
-      preg_match('/if \((\S*) == (\S*)\)/', $this->fileContent, $matches);
-      preg_match('/if \(.*\) {\n(.*)/', $this->fileContent, $operations);
-      $switchCase = 
-'switch (' . $matches[1] . ') {
-  case "' . $matches[2] . '":
-  ' . $operations[1];
-          ;
+      $fileContentArray = explode('\n', $this->fileContent);
+      foreach ($fileContentArray as $fileContentLine) {
+        if (preg_match('/^\s*if\s*\((\S*)\s*==\s*(\S*)\)/', $fileContentLine, $matches)) {
+          $switchCase = "switch (" . $matches[1] . ") {\n";
+          $switchCase .= "  case '" . $matches[2] . "':\n";
+        } else if (preg_match('/else\s*if\s*\(\S*\s*==\s*(\S*)\)/', $fileContentLine, $matches)) {
+          $switchCase .= "    break;\n";
+          $switchCase .= "  case '" . $matches[1] . "':\n";
+        } else if (preg_match('/else\s*{/', $fileContentLine, $matches)) {
+          $switchCase .= "    break;\n";
+          $switchCase .= "  default:\n";
+          $elseFound = true;
+        } else if (preg_match('/^\s*}\s*$/', $fileContentLine) && $elseFound) {
+          $switchCase .= "    break;\n";
+        } else {
+          $switchCase .= '  ' . $fileContentLine . "\n";
+        }
+      }
+      $switchCase .= "\n"; 
       return $switchCase;
-'switch($value) {
-  case "1":
-    echo "foo";
-  break;
-  case "2":
-    echo "bar";
-  break;
-  default:
-    echo "baz";
-  break;
-
-}';
     } else if ($requested == 'switch') {
     }
+
     $directoryIterator = new DirectoryIterator($this->configurationDirectory);
     $alternativeGroups = array();
     foreach ($directoryIterator as $file) {
@@ -77,9 +71,14 @@ class Alternative
   public function addAlternativeGroup($configName, $groupName, $groupValues)
   {
     // TODO Appending of values to a group.
+    // TODO Beautifying the config file.
+    // TODO Adding of a literal value, say 'foo,bar'.
     return file_put_contents($this->configurationDirectory . $configName . '.conf', "\n\n$groupName=$groupValues", FILE_APPEND);
   }
 }
+
+
+// TODO Add this whole execution to the class?
 
 // Do away with the filename
 array_shift($argv);
@@ -113,4 +112,8 @@ foreach ($commandLineOptions as $commandLineOption => $commandLineOptionValue) {
 }
 
 $requested = array_shift($argv);
+$wholeInput = array_shift($argv);
+if ($wholeInput) {
+  $alternative->fileContent = $wholeInput;
+}
 echo $alternative->getAlternative($requested);
