@@ -76,6 +76,7 @@ class Alternative
   }
   public function addAlternativeGroup($configName, $groupName, $groupValues)
   {
+    // TODO Appending of values to a group.
     return file_put_contents($this->configurationDirectory . $configName . '.conf', "\n\n$groupName=$groupValues", FILE_APPEND);
   }
 }
@@ -83,6 +84,7 @@ class Alternative
 // Do away with the filename
 array_shift($argv);
 
+// TODO Handling of command-line options needs mending.
 $argString = implode(" ", $argv);
 $commandLineOptions = getopt($argString);
 $alternative = new Alternative();
@@ -95,6 +97,7 @@ foreach ($commandLineOptions as $commandLineOption => $commandLineOptionValue) {
         }
       }
       $alternative->addAlternativeGroup($arguments[0], $arguments[1], $arguments[2]);
+      echo 'Added to file ' . $arguments[0] . '.conf the group ' . $arguments[1] . ' with values ' . $arguments[2]; 
       die;
       break;
     default:
