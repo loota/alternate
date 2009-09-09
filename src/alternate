@@ -1,0 +1,75 @@
+#!/usr/bin/php
+<?php
+
+class Alternative
+{
+  public function getAlternative($requested)
+  {
+    # TODO Separate the configuration to its own file.
+
+    // TODO Make the special cases configurable.
+    $this->fileContent =
+'if ($value == 1) {
+  echo "foo";
+} else if ($value == 2) {
+  echo "bar";
+} else {
+  echo "baz";
+}';
+    if ($requested == 'if') {
+      preg_match('/if \((\S*) == (\S*)\)/', $this->fileContent, $matches);
+      preg_match('/if \(.*\) {\n(.*)/', $this->fileContent, $operations);
+      $switchCase = 
+'switch (' . $matches[1] . ') {
+  case "' . $matches[2] . '":
+  ' . $operations[1];
+          ;
+      return $switchCase;
+'switch($value) {
+  case "1":
+    echo "foo";
+  break;
+  case "2":
+    echo "bar";
+  break;
+  default:
+    echo "baz";
+  break;
+
+}';
+    } else if ($requested == 'switch') {
+    }
+    $directoryIterator = new DirectoryIterator('/home/heikki/share/alternate/');
+    $alternativeGroups = array();
+    foreach ($directoryIterator as $file) {
+      if (!$file->isDot() && preg_match('/^\w*\.conf$/', $file->getFilename())) {
+        eval('$alternativeConfigs[] = ' . file_get_contents($file->getPathname()));
+      }
+    }
+
+    foreach ($alternativeConfigs as $alternativeConfig) {
+      foreach ($alternativeConfig as $alternativeGroup) {
+        if (in_array($requested, $alternativeGroup)) {
+          $next = false;
+          foreach ($alternativeGroup as $alternative) {
+            if ($next) {
+              return $alternative;
+            }
+            if ($requested == $alternative) {
+              $next = true;
+            }
+          }
+          // If we are here, then the requested value was the last one in the array, thus we return the first one.
+          return array_shift($alternativeGroup);
+        }
+      }
+    }
+  }
+}
+
+// Do away with the filename
+array_shift($argv);
+$requested = array_shift($argv);
+
+$x = new Alternative();
+echo $x->getAlternative($requested);

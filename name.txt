@@ -1,0 +1,23 @@
+reciprocal
+alternate
+alternation
+succession
+flood and ebb tides
+
+Rage, shame, and grief alternate in his breast. --J. Philips.
+
+vicissitude
+interchange
+toggle
+switch
+switcher
+intermingle
+interminglenator
+vary
+mingling
+juxtapose
+jux
+
+Alternate is a program that changes the selected word or visual area to something else.
+For example, in a PHP file, put the cursor over the string 'public' and initiate the plugin.
+The string will turn into 'private' and if initiated again, then to 'protected' and finally back to 'public'.
