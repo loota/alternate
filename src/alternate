@@ -11,23 +11,23 @@ class Alternative
     if ($requested == 'if') {
       $fileContentArray = explode('\n', $this->fileContent);
       foreach ($fileContentArray as $fileContentLine) {
-        if (preg_match('/^\s*if\s*\((\S*)\s*==\s*(\S*)\)/', $fileContentLine, $matches)) {
-          $switchCase = "switch (" . $matches[1] . ") {\n";
-          $switchCase .= "  case '" . $matches[2] . "':\n";
-        } else if (preg_match('/else\s*if\s*\(\S*\s*==\s*(\S*)\)/', $fileContentLine, $matches)) {
-          $switchCase .= "    break;\n";
-          $switchCase .= "  case '" . $matches[1] . "':\n";
-        } else if (preg_match('/else\s*{/', $fileContentLine, $matches)) {
-          $switchCase .= "    break;\n";
-          $switchCase .= "  default:\n";
+        if (preg_match('/^(\s*)if\s*\((\S*)\s*==\s*(\S*)\)/', $fileContentLine, $matches)) {
+          $switchCase = $matches[1] . "switch (" . $matches[2] . ") {\n";
+          $switchCase .= $matches[1] . "  case " . $matches[3] . ":\n";
+        } else if (preg_match('/(\s*)}?\s*else\s*if\s*\(\S*\s*==\s*(.*)\)/', $fileContentLine, $matches)) {
+          $switchCase .= $matches[1] . "    break;\n";
+          $switchCase .= $matches[1] . "  case " . $matches[2] . ":\n";
+        } else if (preg_match('/(\s*)}?\s*else\s*{/', $fileContentLine, $matches)) {
+          $switchCase .= $matches[1] . "    break;\n";
+          $switchCase .= $matches[1] . "  default:\n";
           $elseFound = true;
-        } else if (preg_match('/^\s*}\s*$/', $fileContentLine) && $elseFound) {
-          $switchCase .= "    break;\n";
+        } else if (preg_match('/^(\s*)}\s*$/', $fileContentLine, $matches) && $elseFound) {
+          $switchCase .= $matches[1] . "    break;\n";
+          $switchCase .= $matches[1] . "}\n"; 
         } else {
           $switchCase .= '  ' . $fileContentLine . "\n";
         }
       }
-      $switchCase .= "\n"; 
       return $switchCase;
     } else if ($requested == 'switch') {
     }
