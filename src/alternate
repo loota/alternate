@@ -5,7 +5,7 @@ class Alternative
 {
   public $configurationDirectory = '/home/heikki/share/alternate/';
 
-  public function getAlternative($requested)
+  public function getComplexAlternative($requested)
   {
     // TODO Make the special cases configurable.
     if ($requested == 'if') {
@@ -30,8 +30,12 @@ class Alternative
       }
       return $switchCase;
     } else if ($requested == 'switch') {
+      // TODO remove and make the complex alternating configurable.
     }
+  }
 
+  public function getConfiguration()
+  {
     $directoryIterator = new DirectoryIterator($this->configurationDirectory);
     $alternativeGroups = array();
     foreach ($directoryIterator as $file) {
@@ -47,7 +51,17 @@ class Alternative
         }
       }
     }
+    return $alternativeConfigs;
+  }
 
+  public function getAlternative($requested)
+  {
+    $complexAlternative = $this->getComplexAlternative($requested);
+    if ($complexAlternative) {
+      return $complexAlternative;
+    }
+
+    $alternativeConfigs = $this->getConfiguration();
     foreach ($alternativeConfigs as $alternativeConfig) {
       foreach ($alternativeConfig as $alternativeGroup) {
         if (in_array($requested, $alternativeGroup)) {
@@ -67,6 +81,7 @@ class Alternative
     }
     return '';
   }
+
   public function addAlternativeGroup($configName, $groupName, $groupValues)
   {
     // TODO Appending of values to a group.
@@ -74,6 +89,7 @@ class Alternative
     // TODO Adding of a literal value, say 'foo,bar'.
     return file_put_contents($this->configurationDirectory . $configName . '.conf', "\n\n$groupName=$groupValues", FILE_APPEND);
   }
+
   public function removeAlternativeConfig($configName)
   {
     return unlink ($this->configurationDirectory . $configName . '.conf'); 
@@ -116,7 +132,8 @@ foreach ($commandLineOptions as $commandLineOption => $commandLineOptionValue) {
         Usage:
         alternate [OPTION]... [FILE]...
         OPTIONS
-        -a CONFIGURATION_NAME GROUPNAME GROUP_ALTERNATIVES";
+        -a CONFIGURATION_NAME GROUPNAME GROUP_ALTERNATIVES
+        -r CONFIGURATION_NAME";
       die;
       break;
   }
