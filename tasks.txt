@@ -9,6 +9,8 @@
 2 Major Make complex structures configurable
         
 3 Minor Check for no word under cursor error
+
+3 Tweak Make sure the register a doesn't get clobbered on vim side
         
 3 Minor Checks for non-unique array keys
         
@@ -16,7 +18,12 @@
         
 3 Major Refactor
         
+3 Major if-to-switch breaks on nested if
+
 4 Major Investigate the loop alternating
+
+5 Tweak Clean up the function call on command line from maps
+
 
 
 
