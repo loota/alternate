@@ -39,12 +39,16 @@ function! Alternate(term)
   endif
 
   if alternated != ''
-    let currentCharacter = matchstr(getline("."), '.', getpos(".")[2]-1)
+    let currentCharacter = CurrentCharacter()
     if currentCharacter !~ '\w'
       norm ge
     endif
     return alternated
   endif
+endfunction
+
+function! CurrentCharacter()
+    return matchstr(getline("."), '.', getpos(".")[2]-1)
 endfunction
 
 function! VisualAlternate(term)
