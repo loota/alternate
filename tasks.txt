@@ -1,8 +1,8 @@
 1 Major Improve the heuristic. self:: and $this-> should not be needed to visually highlight
         
-1 Major Make the heuristic find backwards. Cursor on X   if (1)X{   should find if. And in this situation  if ($this->foo())X{  it should find $this-> (or should it?)
-        
-1 Major Move more functionality to the backend
+1 Major Make the heuristic find backwards. Cursor on X   if (1)X{   should find if. And in this situation  if ($this->foo())X{  it should find $this-> (or should it? Better make it configurable)
+
+1 Major Move more functionality to the backend, make file type specific configuration 
         
 2 Minor Check for multibytes
         
@@ -10,8 +10,6 @@
         
 3 Minor Check for no word under cursor error
 
-3 Tweak Make sure the register a doesn't get clobbered on vim side
-        
 3 Minor Checks for non-unique array keys
         
 3 Major Make class visibility alternation add _ to the function or variable name
@@ -26,10 +24,11 @@
 
 
 
-
 ********
 
 Done 1 Create unit tests
 Done 3 Tweak Where should the cursor move if after an alternation it would not be over the new word?  For example, cursor over d   word   -->   war  Should the cursor stay in the same position or move one character back?
 Done 2 Minor Save the indentation when replacing complex structures
+Done 3 Tweak Make sure the register a doesn't get clobbered on vim side
+Done 3 Implement support for removal of groups from vim
         
