@@ -23,8 +23,11 @@ function! Alternate(term)
     let alternateString = join(lines, '\n')
     let alternated = system('alternate ' . shellescape(a:term) . ' ' . shellescape(alternateString))
     exe ifStart . ',' . ifEnd . 'd' 
+		let hns_registerA = getreg('a', 1)
+		let hns_registerAMode = getregtype('a')
     call setreg('a', alternated)
-    exe 'sil ' . ifStart - 1. 'put a'
+    silent exe 'norm "aP'
+    call setreg('a', hns_registerA, hns_registerAMode)
     return alternated
   endif
 
