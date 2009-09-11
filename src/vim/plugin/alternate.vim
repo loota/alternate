@@ -5,9 +5,14 @@ vnoremap \\ y:call Alternate('<C-r>"')<Cr>
 vnoremap \\ y:call VisualAlternate(matchstr(getline("."), '\%V.*\%V.'))<Cr>
 
 command! -nargs=+ AlternateAddGroup call AlternateAddGroup(<f-args>)
+command! -nargs=1 AlternateRemoveGroup call AlternateRemoveGroup(<f-args>)
 
 function! AlternateAddGroup(config, group, alternatives)
     call system('alternate -a ' . shellescape(a:config) . ' ' . shellescape(a:group) . ' ' . shellescape(a:alternatives))
+endfunction
+
+function! AlternateRemoveGroup(config)
+    call system('alternate -r ' . shellescape(a:config))
 endfunction
 
 function! Alternate(term)
