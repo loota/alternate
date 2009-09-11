@@ -1,4 +1,16 @@
 #!/bin/sh
-cp -i ./src/alternate ~/script
-cp -i ./src/share/* ~/share/alternate/
-cp -i ./src/vim/plugin/alternate.vim ~/.vim/plugin
+
+for configFile in `ls src/share/*`
+do
+  cp -i $configFile ~/share/alternate/
+done
+
+for backendFile in `ls src/php/*`
+do
+  cp -i $backendFile ~/script
+done
+
+for clientFile in `ls src/vim/plugin/*`
+do
+  cp -i $clientFile ~/.vim/plugin
+done
