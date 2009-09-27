@@ -1,12 +1,13 @@
 1 Major Improve the heuristic. self:: and $this-> should not be needed to visually highlight
+  Move more functionality to the backend, make file type specific configuration 
         
 1 Major Make the heuristic find backwards. Cursor on X   if (1)X{   should find if. And in this situation  if ($this->foo())X{  it should find $this-> (or should it? Better make it configurable)
 
-1 Major Move more functionality to the backend, make file type specific configuration 
-        
 2 Minor Check for multibytes
         
 2 Major Make complex structures configurable
+
+2 Minor Gather a massive amount of test material, especially for if-switch alternations
         
 3 Minor Check for no word under cursor error
 
@@ -18,11 +19,13 @@
         
 3 Major if-to-switch breaks on nested if
 
+3 Minor Create performance testing
+
 4 Major Investigate the loop alternating
 
-5 Tweak Clean up the function call on command line from maps
+4 Minor Implement support for reading the standard input
 
-
+5 Tweak Clean up the function call message on vim command from maps
 
 ********
 

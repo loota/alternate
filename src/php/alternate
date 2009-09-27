@@ -4,12 +4,45 @@
 class Alternative
 {
   public $configurationDirectory = '/home/heikki/share/alternate/';
+  public $cursorPosition;
+
+  public function __construct()
+  {
+      #$this->alternativeMatchPatterns = getAlternativeMatchPatterns($filetype);
+      #$this->alternativeReturnPatterns = getAlternativeReturnPatterns($filetype);
+    $this->searchHeuristics = file('/home/heikki/project/alternate/src/share/' . 'search.regex');
+  }
+
+  // @param string cursor position line and column, separated by a comma
+  public function setCursorColumn($cursorColumn)
+  {
+    $this->cursorColumn = $cursorColumn;
+  }
+
+  // @param string cursor position line and column, separated by a comma
+  public function setCursorLine($cursorLine)
+  {
+    $this->cursorLine = $cursorLine;
+  }
+
+  public function getCursorColumn()
+  {
+    return $this->cursorColumn;
+  }
+
+  public function getCursorLine()
+  {
+    return $this->cursorLine;
+  }
+
+  public function getAlternativeMatchPatterns() {
+  }
 
   public function getComplexAlternative($requested)
   {
     // TODO Make the special cases configurable.
     if ($requested == 'if') {
-      $fileContentArray = explode('\n', $this->fileContent);
+      $fileContentArray = explode('\n', $this->inputString);
       foreach ($fileContentArray as $fileContentLine) {
         if (preg_match('/^(\s*)if\s*\((\S*)\s*==\s*(\S*)\)/', $fileContentLine, $matches)) {
           $switchCase = $matches[1] . "switch (" . $matches[2] . ") {\n";
@@ -54,28 +87,86 @@ class Alternative
     return $alternativeConfigs;
   }
 
-  public function getAlternative($requested)
+  // This function goes through the search regex patterns and returns the matches
+  // in the requested string.
+  public function getMatchingHeuristics()
   {
-    $complexAlternative = $this->getComplexAlternative($requested);
-    if ($complexAlternative) {
-      return $complexAlternative;
-    }
+    $matchingHeuristics = array();
+    foreach ($this->searchHeuristics as $pattern) {
+      $pattern = substr_replace($pattern, '', -1, 1);
+      $tokens = explode(' ', $this->inputString);
+      $removeFirst = true;
+      $removeBoth = false;
+      $twoTokensMatched = 0;
+      while (true) {
+        if (count($tokens) < 1) {
+          break;
+        }
+        $testTokens = $tokens;
+        $testTokensString = implode(' ', $testTokens);
+        var_dump($i++, $testTokensString, $removeFirst, $removeBoth);
+        // This matches in the column position, kind of like \%23c in vim
+        $cursorColumnInLookBehind = $this->getCursorColumn() - 1;
+        $cursorPositionRegex = '(?<=\A.{' . $cursorColumnInLookBehind . '}';
+        $pattern = str_replace('_ALTERNATE_CURSOR_POSITION_', $cursorPositionRegex, $pattern);
+        if (preg_match($pattern, $testTokensString, $matches)) {
+          if (!in_array($matches[1], $matchingHeuristics)) {
+            $matchingHeuristics[$pattern] = $matches[1];
+          }
+        }
 
-    $alternativeConfigs = $this->getConfiguration();
-    foreach ($alternativeConfigs as $alternativeConfig) {
-      foreach ($alternativeConfig as $alternativeGroup) {
-        if (in_array($requested, $alternativeGroup)) {
-          $next = false;
-          foreach ($alternativeGroup as $alternative) {
-            if ($next) {
-              return $alternative;
+        if ($removeFirst == true) {
+          $firstToken = array_shift($tokens);
+          if ($lastToken) {
+            array_push($tokens, $lastToken);
+          }
+          $removeFirst = false;
+          $removeBoth = false;
+        } else if ($removeBoth == false) {
+          $lastToken = array_pop($tokens);
+          if ($firstToken) {
+            array_unshift($tokens, $firstToken);
+          }
+          $removeBoth = true;
+        } else {
+          array_pop($tokens);
+          $removeFirst = true;
+        }
+      }
+    }
+    var_dump($matchingHeuristics);die;
+    return $matchingHeuristics;
+  }
+
+  // Go through the matching heuristics and see if any of them is configured to be alternated.
+  // Return the first found.
+  public function getAlternative()
+  {
+    $matches = $this->getMatchingHeuristics();
+    foreach ($matches as $pattern => $match) {
+      $complexAlternative = $this->getComplexAlternative($match);
+      if ($complexAlternative) {
+        return $complexAlternative;
+      }
+
+      $alternativeConfigs = $this->getConfiguration();
+      foreach ($alternativeConfigs as $alternativeConfig) {
+        foreach ($alternativeConfig as $alternativeGroup) {
+          if (in_array($match, $alternativeGroup)) {
+            $next = false;
+            foreach ($alternativeGroup as $alternative) {
+              if ($next) {
+                return array($pattern => $alternative);
+              }
+              if ($match == $alternative) {
+                $next = true;
+              }
             }
-            if ($requested == $alternative) {
-              $next = true;
+            if ($next) {
+              // If we are here, then the requested value was the last one in the array, thus we return the first one.
+              return array($pattern => array_shift($alternativeGroup));
             }
           }
-          // If we are here, then the requested value was the last one in the array, thus we return the first one.
-          return array_shift($alternativeGroup);
         }
       }
     }
@@ -92,7 +183,7 @@ class Alternative
 
   public function removeAlternativeConfig($configName)
   {
-    return unlink ($this->configurationDirectory . $configName . '.conf'); 
+    return unlink($this->configurationDirectory . $configName . '.conf'); 
   }
 }
 
@@ -130,7 +221,7 @@ foreach ($commandLineOptions as $commandLineOption => $commandLineOptionValue) {
       echo 'Unknown option "' . $commandLineOption . '". Bailing out.';
       echo "
         Usage:
-        alternate [OPTION]... [FILE]...
+        alternate [OPTION]... [FILE] [CURSOR_POSITION]
         OPTIONS
         -a CONFIGURATION_NAME GROUPNAME GROUP_ALTERNATIVES
         -r CONFIGURATION_NAME";
@@ -139,9 +230,27 @@ foreach ($commandLineOptions as $commandLineOption => $commandLineOptionValue) {
   }
 }
 
-$requested = array_shift($argv);
-$wholeInput = array_shift($argv);
-if ($wholeInput) {
-  $alternative->fileContent = $wholeInput;
+// TODO Other argument handling should also be placed somewhere sane.
+$inputString = array_shift($argv);
+if ($inputString) {
+  $alternative->inputString = $inputString;
 }
-echo $alternative->getAlternative($requested);
+
+$cursorColumn = array_shift($argv);
+if ($cursorColumn) {
+  $alternative->setCursorColumn($cursorColumn);
+}
+
+$cursorLine = array_shift($argv);
+if ($cursorLine) {
+  $alternative->setCursorLine($cursorLine);
+}
+
+if ($alternative->getAlternative()) {
+  $patternAndMatch = $alternative->getAlternative();
+  $pattern = array_shift(array_keys($patternAndMatch));
+  $match = array_shift($patternAndMatch);
+  echo preg_replace($pattern, $match, $alternative->inputString);
+} else {
+  echo $alternative->inputString;
+}

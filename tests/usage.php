@@ -25,7 +25,16 @@ shell_exec('~/project/alternate/src/alternate -r Foo Bar Baz');
 $alternation = shell_exec('~/project/alternate/src/alternate Bar');
 assertEquals($alternation, '');
 
-// TODO Tests for complex structures
+
+// Complex structure
+shell_exec('~/project/alternate/src/alternate -a Foo Bar "Foo Bar,Bar Baz, Barbarian"');
+$alternation = shell_exec('~/project/alternate/src/alternate "Foo Bar" 1,5');
+assertEquals($alternation, 'Bar Baz');
+
+shell_exec('~/project/alternate/src/alternate -r Foo');
+
+
+// TODO Tests for structures with line breaks
 die;
 $alternation = shell_exec("~/project/alternate/src/alternate if '    if (" . '$value' . " == 1) {\n      echo '\''foo'\'';\n    } else if (" . '$value' . " == 2) {\n      echo '\''bar'\'';\n    } else {\n      echo '\''baz'\'';\n    }'");
 assertEquals($alternation, 'switch ($value) {' . "
