@@ -53,10 +53,13 @@ endfunction
 
 function! VisualAlternate(term)
   let alternated = system('alternate ' . shellescape(a:term))
-  if alternated == 'ALTERNATE_DELETE'
-    call setline(".", substitute(getline("."), ' \%V.*\%V.', '', ''))
-  else
-    call setline(".", substitute(getline("."), '\%V.*\%V.', escape(alternated, '$'), ''))
+  echo "." . alternated
+  if alternated != ''
+    if alternated == 'ALTERNATE_DELETE'
+      call setline(".", substitute(getline("."), ' \%V.*\%V.', '', ''))
+    else
+      call setline(".", substitute(getline("."), '\%V.*\%V.', escape(alternated, '$'), ''))
+    endif
   endif
   return alternated
 endfunction

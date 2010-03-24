@@ -1,256 +1,117 @@
-#!/usr/bin/php
-<?php
-
-class Alternative
+#!/usr/local/bin/php
+<?php                         
+$pathinfo = pathinfo(__FILE__);
+require_once($pathinfo['dirname'] . '/../share/config.php');
+class Alternate
 {
-  public $configurationDirectory = '/home/heikki/share/alternate/';
-  public $cursorPosition;
-
-  public function __construct()
-  {
-      #$this->alternativeMatchPatterns = getAlternativeMatchPatterns($filetype);
-      #$this->alternativeReturnPatterns = getAlternativeReturnPatterns($filetype);
-    $this->searchHeuristics = file('/home/heikki/project/alternate/src/share/' . 'search.regex');
-  }
-
-  // @param string cursor position line and column, separated by a comma
-  public function setCursorColumn($cursorColumn)
-  {
-    $this->cursorColumn = $cursorColumn;
-  }
-
-  // @param string cursor position line and column, separated by a comma
-  public function setCursorLine($cursorLine)
-  {
-    $this->cursorLine = $cursorLine;
-  }
-
-  public function getCursorColumn()
-  {
-    return $this->cursorColumn;
-  }
-
-  public function getCursorLine()
-  {
-    return $this->cursorLine;
-  }
-
-  public function getAlternativeMatchPatterns() {
-  }
-
-  public function getComplexAlternative($requested)
-  {
-    // TODO Make the special cases configurable.
-    if ($requested == 'if') {
-      $fileContentArray = explode('\n', $this->inputString);
-      foreach ($fileContentArray as $fileContentLine) {
-        if (preg_match('/^(\s*)if\s*\((\S*)\s*==\s*(\S*)\)/', $fileContentLine, $matches)) {
-          $switchCase = $matches[1] . "switch (" . $matches[2] . ") {\n";
-          $switchCase .= $matches[1] . "  case " . $matches[3] . ":\n";
-        } else if (preg_match('/(\s*)}?\s*else\s*if\s*\(\S*\s*==\s*(.*)\)/', $fileContentLine, $matches)) {
-          $switchCase .= $matches[1] . "    break;\n";
-          $switchCase .= $matches[1] . "  case " . $matches[2] . ":\n";
-        } else if (preg_match('/(\s*)}?\s*else\s*{/', $fileContentLine, $matches)) {
-          $switchCase .= $matches[1] . "    break;\n";
-          $switchCase .= $matches[1] . "  default:\n";
-          $elseFound = true;
-        } else if (preg_match('/^(\s*)}\s*$/', $fileContentLine, $matches) && $elseFound) {
-          $switchCase .= $matches[1] . "    break;\n";
-          $switchCase .= $matches[1] . "}\n"; 
-        } else {
-          $switchCase .= '  ' . $fileContentLine . "\n";
-        }
-      }
-      return $switchCase;
-    } else if ($requested == 'switch') {
-      // TODO remove and make the complex alternating configurable.
-    }
-  }
-
-  public function getConfiguration()
-  {
-    $directoryIterator = new DirectoryIterator($this->configurationDirectory);
-    $alternativeGroups = array();
-    foreach ($directoryIterator as $file) {
-      $filename = $file->getFilename();
-      if (!$file->isDot() && preg_match('/^\w*\.conf$/', $filename)) {
-        $config = file_get_contents($file->getPathname());
-        $configLines = explode("\n", $config);
-        foreach ($configLines as $configLine) {
-          $groupNameValue = explode("=", $configLine);
-          $groupName  = $groupNameValue[0];
-          $groupValue = explode(",", $groupNameValue[1]);
-          $alternativeConfigs[$filename][$groupName] = $groupValue;
-        }
+  private $configurationDirectories = array();
+  private $alternationConfigs = array();
+  
+  private function getNextAlternative($string, $alternationGroup)
+  {             
+          
+    foreach ($alternationGroup as $alternative) {
+      if (preg_match('/' . $alternative . '/', $string, $matches)) {
       }
     }
-    return $alternativeConfigs;
-  }
-
-  // This function goes through the search regex patterns and returns the matches
-  // in the requested string.
-  public function getMatchingHeuristics()
-  {
-    $matchingHeuristics = array();
-    foreach ($this->searchHeuristics as $pattern) {
-      $pattern = substr_replace($pattern, '', -1, 1);
-      $tokens = explode(' ', $this->inputString);
-      $removeFirst = true;
-      $removeBoth = false;
-      $twoTokensMatched = 0;
-      while (true) {
-        if (count($tokens) < 1) {
-          break;
-        }
-        $testTokens = $tokens;
-        $testTokensString = implode(' ', $testTokens);
-        var_dump($i++, $testTokensString, $removeFirst, $removeBoth);
-        // This matches in the column position, kind of like \%23c in vim
-        $cursorColumnInLookBehind = $this->getCursorColumn() - 1;
-        $cursorPositionRegex = '(?<=\A.{' . $cursorColumnInLookBehind . '}';
-        $pattern = str_replace('_ALTERNATE_CURSOR_POSITION_', $cursorPositionRegex, $pattern);
-        if (preg_match($pattern, $testTokensString, $matches)) {
-          if (!in_array($matches[1], $matchingHeuristics)) {
-            $matchingHeuristics[$pattern] = $matches[1];
-          }
-        }
-
-        if ($removeFirst == true) {
-          $firstToken = array_shift($tokens);
-          if ($lastToken) {
-            array_push($tokens, $lastToken);
-          }
-          $removeFirst = false;
-          $removeBoth = false;
-        } else if ($removeBoth == false) {
-          $lastToken = array_pop($tokens);
-          if ($firstToken) {
-            array_unshift($tokens, $firstToken);
-          }
-          $removeBoth = true;
-        } else {
-          array_pop($tokens);
-          $removeFirst = true;
-        }
-      }
+    $keyOfMatch = array_search($string, $alternationGroup);
+    $keyOfMatch++;
+    $keyOfMatchIsLastInArray = ($keyOfMatch === count($alternationGroup));
+    if ($keyOfMatchIsLastInArray) {
+      $next = $alternationGroup[0];
+    } else {
+      $next = $alternationGroup[$keyOfMatch];
     }
-    var_dump($matchingHeuristics);die;
-    return $matchingHeuristics;
+    return $next;
   }
 
-  // Go through the matching heuristics and see if any of them is configured to be alternated.
-  // Return the first found.
-  public function getAlternative()
+  public function getMatchFor($string)
   {
-    $matches = $this->getMatchingHeuristics();
-    foreach ($matches as $pattern => $match) {
-      $complexAlternative = $this->getComplexAlternative($match);
-      if ($complexAlternative) {
-        return $complexAlternative;
-      }
-
-      $alternativeConfigs = $this->getConfiguration();
-      foreach ($alternativeConfigs as $alternativeConfig) {
-        foreach ($alternativeConfig as $alternativeGroup) {
-          if (in_array($match, $alternativeGroup)) {
-            $next = false;
-            foreach ($alternativeGroup as $alternative) {
-              if ($next) {
-                return array($pattern => $alternative);
-              }
-              if ($match == $alternative) {
-                $next = true;
+    foreach ($this->alternationConfigs as $alternationDirectories) {
+      foreach ($alternationDirectories as $alternationLanguages) {
+        foreach ($alternationLanguages as $alternationGroups) {
+          foreach ($alternationGroups as $alternationGroupKey => $alternationGroup) {
+            #$found = in_array($string, $alternationGroup);
+            $found = false;
+            // TODO Why doesn't the regex alternationGroup from regex come here?
+            foreach ($alternationGroup as $alternative) {
+              if (preg_match('/' . $alternative . '/', $string, $matches)) {
+                #var_dump('matches', $matches);
+                $found = true;
               }
             }
-            if ($next) {
-              // If we are here, then the requested value was the last one in the array, thus we return the first one.
-              return array($pattern => array_shift($alternativeGroup));
+            if ($found) {
+              $next = $this->getNextAlternative($string, $alternationGroup);
+              return $next;
             }
           }
         }
       }
     }
-    return '';
   }
 
-  public function addAlternativeGroup($configName, $groupName, $groupValues)
+  public function addConfigurationDirectory($directory)
   {
-    // TODO Appending of values to a group.
-    // TODO Beautifying the config file.
-    // TODO Adding of a literal value, say 'foo,bar'.
-    return file_put_contents($this->configurationDirectory . $configName . '.conf', "\n\n$groupName=$groupValues", FILE_APPEND);
+    array_unshift($this->configurationDirectories, $directory);
   }
 
-  public function removeAlternativeConfig($configName)
+  public function addConfiguration($language)
   {
-    return unlink($this->configurationDirectory . $configName . '.conf'); 
+    $this->configurationDirectory = '../share';
+    foreach ($this->configurationDirectories as $configurationDirectory) {
+      $directoryIterator = new DirectoryIterator($configurationDirectory);
+      $alternationGroups = array();
+      foreach ($directoryIterator as $file) {
+        $filename = $file->getFilename();
+        if (!$file->isDot() && preg_match('/^' . $language . '\.conf$/', $filename)) {
+          $config = file_get_contents($file->getPathname());
+          $configLines = explode("\n", $config);
+          foreach ($configLines as $configLine) {
+            if ($configLine === '') {
+              continue;
+            }
+            $groupNameValue = explode("=", $configLine);
+            $groupName  = $groupNameValue[0];
+            $groupValue = explode(",", $groupNameValue[1]);
+            $alternationConfigs[$configurationDirectory][$language][$groupName] = $groupValue;
+          }
+        }
+      }
+    }
+    array_unshift($this->alternationConfigs, $alternationConfigs);
   }
 }
 
+$alternate = new Alternate();
+$alternate->addConfigurationDirectory(PROJECT_DIR . 'src/share');
+$alternate->addConfiguration('php');
+$alternate->addConfiguration('english');
 
-// TODO Add this whole execution to the class?
-
+if (!$argv) {
+  exit;
+}
 // Do away with the filename
 array_shift($argv);
 
 // TODO Handling of command-line options needs mending.
 $argString = implode(" ", $argv);
-$commandLineOptions = getopt($argString);
-$alternative = new Alternative();
-foreach ($commandLineOptions as $commandLineOption => $commandLineOptionValue) {
-  switch ($commandLineOption) {
-    case 'a':
-      foreach ($argv as $argument) {
-        if (!preg_match('/^-/', $argument)) {
-          $arguments[] = $argument;
-        }
+foreach ($argv as $cliArgument) {
+  if (strpos($cliArgument, '-') === 0) {
+    if (strpos($cliArgument, '=') !== false) {
+      $argumentKeyValue = explode('=', $cliArgument);
+      $argumentKey = $argumentKeyValue[0];
+      $argumentValue = $argumentKeyValue[1];
+
+      if ($argumentKey === '--alternateFile') {
+        $configurationType = explode('.', $argumentValue);
+        $alternate->addConfiguration($configurationType[0]);
+      } else if ($argumentKey === '--alternateDirectory') { 
+        $alternate->addConfigurationDirectory($argumentValue);
       }
-      $alternative->addAlternativeGroup($arguments[0], $arguments[1], $arguments[2]);
-      echo 'Added to file ' . $arguments[0] . '.conf the group ' . $arguments[1] . ' with values ' . $arguments[2]; 
-      die;
-      break;
-    case 'r':
-      foreach ($argv as $argument) {
-        if (!preg_match('/^-/', $argument)) {
-          $alternative->removeAlternativeConfig($argument);
-        }
-      }
-      die;
-      break;
-    default:
-      echo 'Unknown option "' . $commandLineOption . '". Bailing out.';
-      echo "
-        Usage:
-        alternate [OPTION]... [FILE] [CURSOR_POSITION]
-        OPTIONS
-        -a CONFIGURATION_NAME GROUPNAME GROUP_ALTERNATIVES
-        -r CONFIGURATION_NAME";
-      die;
-      break;
+    }
+  } else {
+    $inputString = $cliArgument;
   }
 }
 
-// TODO Other argument handling should also be placed somewhere sane.
-$inputString = array_shift($argv);
-if ($inputString) {
-  $alternative->inputString = $inputString;
-}
-
-$cursorColumn = array_shift($argv);
-if ($cursorColumn) {
-  $alternative->setCursorColumn($cursorColumn);
-}
-
-$cursorLine = array_shift($argv);
-if ($cursorLine) {
-  $alternative->setCursorLine($cursorLine);
-}
-
-if ($alternative->getAlternative()) {
-  $patternAndMatch = $alternative->getAlternative();
-  $pattern = array_shift(array_keys($patternAndMatch));
-  $match = array_shift($patternAndMatch);
-  echo preg_replace($pattern, $match, $alternative->inputString);
-} else {
-  echo $alternative->inputString;
-}
+echo $alternate->getMatchFor($inputString);
