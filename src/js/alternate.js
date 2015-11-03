@@ -4,6 +4,7 @@ var wanted = process.argv[2]
 
 var wordLists = [
     ['true', 'false', 'null'], 
+    //PHP
     ['static', 'ALTERNATE_DELETE'],
     //@TODO adds static again and again. Need word matching?
     ['function', 'static function'],
@@ -11,8 +12,12 @@ var wordLists = [
     ['extends', 'implements'],
     ['$this->', 'self::'],
     ['->', '::'],
-    ['class', 'trait']
+    ['class', 'trait'],
+    //JavaScript
+    ['var', 'const', 'let'],
+    ['NaN', 'undefined', "''"]
 ]
+
 
 wordLists.forEach(function(words) {
     var matchIndex = words.indexOf(wanted)
