@@ -7,10 +7,10 @@ done
 
 for backendFile in `ls src/php/*`
 do
-  cp -i $backendFile ~/script
+  cp -i $backendFile ~/script/
 done
 
 for clientFile in `ls src/vim/plugin/*`
 do
-  cp -i $clientFile ~/.vim/plugin
+  cp -i $clientFile ~/.vim/plugin/
 done

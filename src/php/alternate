@@ -1,4 +1,4 @@
-#!/usr/local/bin/php
+#!/usr/bin/env php
 <?php                         
 $pathinfo = pathinfo(__FILE__);
 require_once($pathinfo['dirname'] . '/../share/config.php');
